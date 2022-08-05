@@ -157,7 +157,7 @@ class Predictor(object):
         img_info["width"] = width
         img_info["raw_img"] = img
 
-        img, ratio = preproc(img, self.test_size, self.rgb_means, self.std)
+        img, ratio = preproc(img, self.test_size)
         img_info["ratio"] = ratio
         img = torch.from_numpy(img).unsqueeze(0).float().to(self.device)
         if self.fp16:
@@ -185,9 +185,12 @@ def image_demo(predictor, vis_folder, current_time, args):
     timer = Timer()
     results = []
 
+    aaa = 0
     for frame_id, img_path in enumerate(files, 1):
         outputs, img_info = predictor.inference(img_path, timer)
+        aaa += len(outputs[0])
         if outputs[0] is not None:
+            
             online_targets = tracker.update(outputs[0], [img_info['height'], img_info['width']], exp.test_size)
             online_tlwhs = []
             online_ids = []
@@ -225,7 +228,6 @@ def image_demo(predictor, vis_folder, current_time, args):
         ch = cv2.waitKey(0)
         if ch == 27 or ch == ord("q") or ch == ord("Q"):
             break
-
     if args.save_result:
         res_file = osp.join(vis_folder, f"{timestamp}.txt")
         with open(res_file, 'w') as f:
@@ -253,12 +255,14 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
     timer = Timer()
     frame_id = 0
     results = []
+    aaa = 0
     while True:
         if frame_id % 20 == 0:
             logger.info('Processing frame {} ({:.2f} fps)'.format(frame_id, 1. / max(1e-5, timer.average_time)))
         ret_val, frame = cap.read()
         if ret_val:
             outputs, img_info = predictor.inference(frame, timer)
+            
             if outputs[0] is not None:
                 online_targets = tracker.update(outputs[0], [img_info['height'], img_info['width']], exp.test_size)
                 online_tlwhs = []
@@ -290,7 +294,6 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         else:
             break
         frame_id += 1
-
     if args.save_result:
         res_file = osp.join(vis_folder, f"{timestamp}.txt")
         with open(res_file, 'w') as f:
