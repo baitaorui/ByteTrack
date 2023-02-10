@@ -172,6 +172,8 @@ def post_pro(outputs):
 def imageflow_demo(predictor, vis_folder, current_time, args):
     videos = os.listdir(args.path)
     for video in videos:
+        if ".mp4" not in video:
+             continue
         cap = cv2.VideoCapture(args.path + video)
         width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
@@ -179,23 +181,25 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         timestamp = time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
         save_folder = osp.join(vis_folder, timestamp)
         os.makedirs(save_folder, exist_ok=True)
+        os.makedirs(save_folder + "/result", exist_ok=True)
         save_path = osp.join(save_folder, video)
         logger.info(f"video save_path is {save_path}")
         vid_writer = cv2.VideoWriter(
             save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
         )
         mask, colo_img = get_polygon(width, height)
-        trackers = [BYTETracker(args, frame_rate=30) for i in range(0,20)]
+        cart = [0 for i in CLASSES]
+        trackers = [BYTETracker(args, frame_rate=30) for i in range(0,len(CLASSES))]
         frame_id = 0
         results = []
         # list 与蓝色polygon重叠
-        list_overlapping_blue_polygon = [[] for i in range(0,20)]
+        list_overlapping_blue_polygon = [[] for i in range(0,len(CLASSES))]
         # list 与黄色polygon重叠
-        list_overlapping_yellow_polygon = [[] for i in range(0,20)]
+        list_overlapping_yellow_polygon = [[] for i in range(0,len(CLASSES))]
         # 进入数量
-        down_count = [0 for i in range(0,20)]
+        down_count = [0 for i in range(0,len(CLASSES))]
         # 离开数量
-        up_count = [0 for i in range(0,20)]
+        up_count = [0 for i in range(0,len(CLASSES))]
 
         while True:
             if frame_id % 20 == 0:
@@ -218,16 +222,19 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                                 online_tlwhs.append(tlwh)
                                 online_ids.append(tid)
                                 online_scores.append(t.score)
+                            # results.append(
+                            #     f"{frame_id},{i},{tid},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{t.score:.2f},-1,-1,-1\n"
+                            # )
                             results.append(
-                                f"{frame_id},{i},{tid},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{t.score:.2f},-1,-1,-1\n"
+                                f"{frame_id},{tid},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{t.score:.2f},{i},-1\n"
                             )
                         online_im = plot_tracking2(online_im, online_tlwhs, online_ids, frame_id=frame_id + 1)
-                        list_overlapping_blue_polygon[i], list_overlapping_yellow_polygon[i], down_count[i], up_count[i] = judge(
-                            online_targets, list_overlapping_blue_polygon[i], list_overlapping_yellow_polygon[i], down_count[i], up_count[i], i, mask
+                        list_overlapping_blue_polygon[i], list_overlapping_yellow_polygon[i], down_count[i], up_count[i], cart = judge(
+                            online_targets, list_overlapping_blue_polygon[i], list_overlapping_yellow_polygon[i], down_count[i], up_count[i], i, mask, cart
                             )
                     else :
                         online_im = plot_tracking2(online_im, [], [],  frame_id=frame_id + 1)
-                online_im = plot_text(online_im, down_count)
+                online_im = plot_text(online_im, cart)
                 if args.save_result:
                     vid_writer.write(online_im)
                 ch = cv2.waitKey(1)
@@ -237,10 +244,15 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                 break
             frame_id += 1
         if args.save_result:
-            res_file = osp.join(vis_folder, f"{timestamp + video}.txt")
+            # res_file = osp.join(vis_folder, f"{timestamp + video}.txt")
+            # with open(res_file, 'w') as f:
+            #     f.writelines(results)
+            # logger.info(f"save results to {res_file}")
+            res_file = osp.join(vis_folder + "/" + timestamp + "/result" , f"{video.split('.')[0]}.txt")
             with open(res_file, 'w') as f:
                 f.writelines(results)
             logger.info(f"save results to {res_file}")
+    trackers = []
 
 def main(exp, args):
     if not args.experiment_name:

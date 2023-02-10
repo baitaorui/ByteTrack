@@ -194,9 +194,9 @@ class Sort(object):
     self.iou_threshold = iou_threshold
     self.trackers = []
     self.frame_count = 0
-    self.det_thresh = det_thresh
+    self.det_thresh = det_thresh.track_thresh
 
-  def update(self, output_results, img_info, img_size):
+  def update2(self, output_results, img_info, img_size):
     """
     Params:
       dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
@@ -206,9 +206,12 @@ class Sort(object):
     """
     self.frame_count += 1
     # post_process detections
-    output_results = output_results.cpu().numpy()
-    scores = output_results[:, 4] * output_results[:, 5]
-    bboxes = output_results[:, :4]  # x1y1x2y2
+    # output_results = output_results.cpu().numpy()
+    # scores = output_results[:, 4] * output_results[:, 5]
+    # bboxes = output_results[:, :4]  # x1y1x2y2
+    scores = output_results[:, 4]
+    # classes = output_results[:, 5]
+    bboxes = output_results[:, :4]
     img_h, img_w = img_info[0], img_info[1]
     scale = min(img_size[0] / float(img_h), img_size[1] / float(img_w))
     bboxes /= scale
@@ -247,5 +250,5 @@ class Sort(object):
         if(trk.time_since_update > self.max_age):
           self.trackers.pop(i)
     if(len(ret)>0):
-      return np.concatenate(ret)
+      return ret
     return np.empty((0,5))

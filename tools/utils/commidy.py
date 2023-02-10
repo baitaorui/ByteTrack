@@ -7,41 +7,48 @@ import cv2
 import numpy as np
 import torch
 
-CLASSES = ['baishi_ping',
-'binghongcha',
-'binghongcha_big',
+CLASSES = ['baishi_500',
+'baishi_330',
+'baishi_black_330',
+'baisuishan',
 'dongfangshuye',
 'dongpeng',
-'fangbianmian_dai',
-'fangbianmian_tong',
-'guolicheng',
-'hongniu_guan',
-'kekou_guan',
-'kekou_ping',
+'hongniu',
+'ksf_binghongcha',
+'ksf_lvcha',
+'ksf_molimi',
+'ksf_moliqing',
+'ksf_qinmeilvcha',
+'kekoukele_330',
+'kekoukele_600',
 'maidong',
-'molimi',
-'moliqing',
 'nongfushanquan',
-'pijiu',
 'shuirongc100',
-'xuebi_guan',
-'xuebi_ping',
-'yuanqi']
-
+'shanzhashuxia',
+'asamu_nailv',
+'asamu_naicha',
+'guolicheng',
+'xuebi_330',
+'yezizhi',
+'yuanqi',
+'yuanqi_waixingren'
+]
 
 def get_polygon(width, height):
         # 根据视频尺寸，填充一个polygon，供撞线计算使用
     mask_image_temp = np.zeros((1080, 1920), dtype=np.uint8)
     # 初始化2个撞线polygon
     # list_pts_blue = [[50, 525],  [1898, 650], [1893, 750], [45, 625]]
-    list_pts_blue = [[50, 475],  [1898, 600], [1893, 1000], [45, 875]]
+    # list_pts_blue = [[45, 475],  [1898, 600], [1893, 1000], [45, 875]]
+    list_pts_blue = [[45, 600],  [1898, 600], [1893, 900], [45, 900]]
     ndarray_pts_blue = np.array(list_pts_blue, np.int32)
     polygon_blue_value_1 = cv2.fillPoly(mask_image_temp, [ndarray_pts_blue], color=1)
     polygon_blue_value_1 = polygon_blue_value_1[:, :, np.newaxis]
     # 填充第二个polygon
     mask_image_temp = np.zeros((1080, 1920), dtype=np.uint8)
     # list_pts_yellow = [[50, 425],  [1898, 550], [1893, 650], [45, 525]]
-    list_pts_yellow = [[50, 75],  [1898, 200], [1893, 600], [45, 475]]
+    # list_pts_yellow = [[45, 75],  [1898, 200], [1893, 600], [45, 475]]
+    list_pts_yellow = [[45, 300],  [1898, 300], [1893, 600], [45, 600]]
     ndarray_pts_yellow = np.array(list_pts_yellow, np.int32)
     polygon_yellow_value_2 = cv2.fillPoly(mask_image_temp, [ndarray_pts_yellow], color=2)
     polygon_yellow_value_2 = polygon_yellow_value_2[:, :, np.newaxis]
@@ -64,7 +71,7 @@ def get_polygon(width, height):
 
     return polygon_mask, color_polygons_image
 
-def judge(online_targets, list_overlapping_blue_polygon, list_overlapping_yellow_polygon, down_count, up_count, class_name, polygon_mask_blue_and_yellow):
+def judge(online_targets, list_overlapping_blue_polygon, list_overlapping_yellow_polygon, down_count, up_count, class_name, polygon_mask_blue_and_yellow, cart):
     list_bboxs = []
     for tracker in online_targets:
         x1, y1, x2, y2 = tracker.tlbr
@@ -92,10 +99,14 @@ def judge(online_targets, list_overlapping_blue_polygon, list_overlapping_yellow
                         # 外出+1
                         up_count += 1
 
-                        print(f'类别: {CLASSES[label]} | id: {track_id} | 上行撞线 | 上行撞线总数: {up_count} | 上行id列表: {list_overlapping_yellow_polygon}')
+                        print(f'类别: {CLASSES[label]} | id: {track_id} | 入柜撞线 | 入柜撞线总数: {up_count} | 入柜id列表: {list_overlapping_yellow_polygon}')
 
                         # 删除 黄polygon list 中的此id
                         list_overlapping_yellow_polygon.remove(track_id)
+                        if cart[label] < 1:
+                            print("异常！")
+                        else:
+                            cart[label] -= 1
 
                         pass
                     else:
@@ -114,10 +125,12 @@ def judge(online_targets, list_overlapping_blue_polygon, list_overlapping_yellow
                         # 进入+1
                         down_count += 1
 
-                        print(f'类别: {CLASSES[label]} | id: {track_id} | 下行撞线 | 下行撞线总数: {down_count} | 下行id列表: {list_overlapping_blue_polygon}')
+                        print(f'类别: {CLASSES[label]} | id: {track_id} | 离柜撞线 | 离柜撞线总数: {down_count} | 离柜id列表: {list_overlapping_blue_polygon}')
 
                         # 删除 蓝polygon list 中的此id
                         list_overlapping_blue_polygon.remove(track_id)
+                        
+                        cart[label] += 1
 
                         pass
                     else:
@@ -128,14 +141,14 @@ def judge(online_targets, list_overlapping_blue_polygon, list_overlapping_yellow
                     pass
                 pass
 
-    return list_overlapping_blue_polygon, list_overlapping_yellow_polygon, down_count, up_count
+    return list_overlapping_blue_polygon, list_overlapping_yellow_polygon, down_count, up_count, cart
 
-def plot_text(online_im, down_count):
+def plot_text(online_im, cart):
     im = np.ascontiguousarray(np.copy(online_im))
     p = 3
-    for i in range(0, len(down_count)):
-        if down_count[i] is not 0:
-            cv2.putText(im, '%s : %d' % (CLASSES[i],down_count[i]),
+    for i in range(0, len(cart)):
+        if cart[i] is not 0:
+            cv2.putText(im, '%s : %d' % (CLASSES[i], cart[i]),
                 (0, int(15 * p)), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), thickness=2)
             p += 1
     return im
