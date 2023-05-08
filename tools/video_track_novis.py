@@ -15,6 +15,7 @@ from yolox.utils import fuse_model
 from yolox.utils.visualize import plot_tracking2
 from yolox.tracker.byte_tracker import BYTETracker
 from yolox.sort_tracker.sort import Sort
+from tracker.newByteTrack import NewByteTrack
 from mmdet.apis import inference_detector, init_detector
 from tools.utils import CLASSES
 from tools.utils import get_polygon, judge, plot_text
@@ -81,9 +82,9 @@ def make_parser():
         help="Fuse conv and bn for testing.",
     )
     # tracking args
-    parser.add_argument("--track_thresh", type=float, default=0.5, help="tracking confidence threshold")
+    parser.add_argument("--track_thresh", type=float, default=0.1, help="tracking confidence threshold")
     parser.add_argument("--track_buffer", type=int, default=150, help="the frames for keep lost tracks")
-    parser.add_argument("--match_thresh", type=float, default=0.9, help="matching threshold for tracking")
+    parser.add_argument("--match_thresh", type=float, default=0.6, help="matching threshold for tracking")
     parser.add_argument(
         "--aspect_ratio_thresh", type=float, default=1.6,
         help="threshold for filtering out boxes of which aspect ratio are above the given value."

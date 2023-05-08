@@ -57,11 +57,11 @@ def get_polygon(width, height):
     # 缩小尺寸
     polygon_mask = cv2.resize(polygon_mask, (int(width), int(height)))
     # 蓝 色盘 b,g,r
-    blue_color_plate = [255, 0, 0]
+    blue_color_plate = [0, 255, 255]
     # 蓝 polygon图片
     blue_image = np.array(polygon_blue_value_1 * blue_color_plate, np.uint8)
     # 黄 色盘
-    yellow_color_plate = [0, 255, 255]
+    yellow_color_plate = [255, 0, 0]
     # 黄 polygon图片
     yellow_image = np.array(polygon_yellow_value_2 * yellow_color_plate, np.uint8)
     # 彩色图片（值范围 0-255）

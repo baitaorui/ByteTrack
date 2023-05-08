@@ -14,6 +14,7 @@ from yolox.exp import get_exp
 from yolox.utils import fuse_model
 from yolox.utils.visualize import plot_tracking2
 from tracker.bytetrack import ByteTrack
+from tracker.newByteTrack import NewByteTrack
 from tracker.deepsort import DeepSORT
 from tracker.basetrack import BaseTracker
 from tracker.botsort import BoTSORT
@@ -195,7 +196,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         #     save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
         # )
         mask, colo_img = get_polygon(width, height)
-        trackers = [ByteTrack(args, frame_rate=30) for i in range(0,len(CLASSES))]
+        trackers = [NewByteTrack(args, frame_rate=30) for i in range(0,len(CLASSES))]
         # trackers = [Sort(args) for i in range(0,len(CLASSES))]
         frame_id = 0
         results = []

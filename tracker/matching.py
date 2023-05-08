@@ -81,6 +81,27 @@ def iou_distance(atracks, btracks):
 
     return cost_matrix
 
+def euc_distance(atracks, btracks):
+    """
+    Compute cost based on IoU
+    :type atracks: list[STrack]
+    :type btracks: list[STrack]
+
+    :rtype cost_matrix np.ndarray
+    """
+
+    if (len(atracks)>0 and isinstance(atracks[0], np.ndarray)) or (len(btracks) > 0 and isinstance(btracks[0], np.ndarray)):
+        atlbrs = atracks
+        btlbrs = btracks
+    else:
+        atlbrs = [track.tlbr[:2] for track in atracks]
+        btlbrs = [track.tlbr[:2] for track in btracks]
+    # _eucs = cal_eculidian_distance(np.ascontiguousarray(atlbrs), np.ascontiguousarray(btlbrs))
+    _eucs = euclidean_distance(atlbrs, btlbrs)
+    cost_matrix = _eucs
+
+    return cost_matrix
+
 def embedding_distance(tracks, detections, metric='cosine'):
     """
     :param tracks: list[STrack]
@@ -152,6 +173,13 @@ def cal_cosine_distance(mat1, mat2):
     mat2 = mat2 / np.linalg.norm(mat2, axis=1, keepdims=True)
 
     return np.dot(mat1, mat2.T)    
+
+def euclidean_distance(list1, list2):
+    result = np.zeros((len(list1), len(list2)))
+    for i, row in enumerate(list1):
+        for j, col in enumerate(list2):
+            result[i, j] = np.linalg.norm(row - col)
+    return result
 
 def cal_eculidian_distance(mat1, mat2):
     """

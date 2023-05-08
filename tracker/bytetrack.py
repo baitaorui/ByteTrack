@@ -16,8 +16,8 @@ class ByteTrack(BaseTracker):
         self.low_conf_thresh = max(0.15, self.opts.match_thresh - 0.3)  # low threshold for second matching
 
         self.filter_small_area = False  # filter area < 50 bboxs
-        self.kalman = NewKalmanFilter()
-        self.kalman_format = 'new'
+        self.kalman = KalmanFilter()
+        self.kalman_format = 'default'
         # self.kalman = KalmanFilter()
         # self.kalman_format = 'default'
 

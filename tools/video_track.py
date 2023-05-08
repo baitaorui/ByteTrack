@@ -13,7 +13,8 @@ from yolox.data.data_augment import preproc
 from yolox.exp import get_exp
 from yolox.utils import fuse_model
 from yolox.utils.visualize import plot_tracking2
-from yolox.tracker.byte_tracker import BYTETracker
+# from yolox.tracker.byte_tracker import BYTETracker
+from tracker.bytetrack import ByteTrack
 from mmdet.apis import inference_detector, init_detector
 from tools.utils import CLASSES
 from tools.utils import get_polygon, judge, plot_text
@@ -189,7 +190,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         )
         mask, colo_img = get_polygon(width, height)
         cart = [0 for i in CLASSES]
-        trackers = [BYTETracker(args, frame_rate=30) for i in range(0,len(CLASSES))]
+        trackers = [ByteTrack(args, frame_rate=30) for i in range(0,len(CLASSES))]
         frame_id = 0
         results = []
         # list 与蓝色polygon重叠
@@ -211,7 +212,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                 online_im = cv2.add(online_im, colo_img)
                 for i in range(0, len(outputs)):
                     if outputs[i] is not None and len(outputs[i] > 0):
-                        online_targets = trackers[i].update2(outputs[i], [img_info['height'], img_info['width']], exp.test_size)
+                        online_targets = trackers[i].update(outputs[i], exp.test_size)
                         online_tlwhs = []
                         online_ids = []
                         online_scores = []
